@@ -608,6 +608,21 @@ cleaningServer:
   extraVolumes: []
   extraVolumeMounts: []
 
+contentExternal:
+  enabled: true
+  nameOverride: content-external
+  image:
+    repository: ghcr.io/buerokratt/common-knowledge
+    tag: content-external-dev-1-1-1
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8125
+  workDir: /content-external-work
+  env: []  # wired in A10/A12
+  persistence:
+    size: 1Gi
+
 # --- RabbitMQ (scrapper) -------------------------------------------------------
 rabbitmq:
   enabled: true

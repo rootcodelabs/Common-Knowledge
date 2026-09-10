@@ -1,0 +1,44 @@
+{{- if .Values.contentExternal.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.contentExternal.nameOverride }}
+  labels:
+    app: {{ .Values.contentExternal.nameOverride }}
+spec:
+  # A14: F2's flock is the only defence against an export and a drain
+  # overlapping, and flock is only sound within one kernel. replicas must
+  # stay 1 — never scale this deployment.
+  replicas: 1
+  strategy:
+    # A14: never RollingUpdate. It runs two pods at once, which on an RWX
+    # volume (flock advisory, not honoured across nodes) means two
+    # concurrent exports with no error, and on RWO means a stalled rollout.
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Values.contentExternal.nameOverride }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.contentExternal.nameOverride }}
+    spec:
+      containers:
+        - name: {{ .Values.contentExternal.nameOverride }}
+          image: "{{ .Values.contentExternal.image.repository }}:{{ .Values.contentExternal.image.tag }}"
+          imagePullPolicy: {{ .Values.contentExternal.image.pullPolicy }}
+          env:
+            {{- range .Values.contentExternal.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.contentExternal.service.port }}
+          volumeMounts:
+            - name: content-external-work
+              mountPath: {{ .Values.contentExternal.workDir }}
+      volumes:
+        - name: content-external-work
+          persistentVolumeClaim:
+            claimName: "{{ .Values.contentExternal.nameOverride }}-work-pvc"
+{{- end }}

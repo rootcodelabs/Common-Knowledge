@@ -2,6 +2,11 @@
 # A14: this PVC is not optional — it holds F2's run lock and the deletion
 # journal. It must be block/local-backed (RWO), never RWX (NFS/EFS/CephFS),
 # because flock is only sound within one kernel.
+#
+# Rule 1 is asserted in _helpers.tpl (ckb.contentExternal.workDir), which the
+# deployment must call to obtain both this claim's mount path and
+# CONTENT_WORK_DIR. A workDir under a scrapped-data tree aborts the render
+# before anything is installed.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

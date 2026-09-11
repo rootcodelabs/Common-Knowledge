@@ -438,6 +438,12 @@ services:
       vault-agent-cleaner:
         condition: service_healthy
 
+  # Rule 1, first of three assertion sites: this service never mounts
+  # ./scrapped-data, in any mode. Its work dir is a dedicated named volume and
+  # CONTENT_WORK_DIR points at it. Anything written under the scraped tree is
+  # zipped into the Global Classifier's payload on the next hourly run,
+  # silently. Also asserted in charts/ckb/templates/_helpers.tpl and in
+  # content-external/exporter/api/config.py.
   content-external:
     container_name: content-external
     build:
@@ -446,9 +452,12 @@ services:
     ports:
       - 8125:8125
     volumes:
-      - content-external-work:/content-external-work
+      - content-external-work:/var/lib/content-external
     environment:
-      - CONTENT_WORK_DIR=/content-external-work
+      # Required, with no default in the code: a fallback would let a
+      # deployment that forgot this write the run lock and the deletion
+      # journal somewhere other than the volume above, unnoticed.
+      - CONTENT_WORK_DIR=/var/lib/content-external
     networks:
       - bykstack
 
@@ -477,6 +486,10 @@ services:
       - bykstack
 
 volumes:
+  # content-external's durable work dir: the run lock (F2) and the
+  # deferred-deletion journal. Must survive a restart, and must never be a
+  # bind mount into the scraped tree (rule 1).
+  content-external-work:
   opensearch-data:
   vault-data:
   vault-init-data:      # separate from vault-data — stores unseal keys and init flag only

@@ -362,6 +362,7 @@ scrapper = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "hvac" },
     { name = "loguru" },
     { name = "pre-commit" },
@@ -424,6 +425,7 @@ provides-extras = ["cleaning", "scrapper", "scheduler", "data-export", "file-pro
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "httpx", specifier = "==0.28.1" },
     { name = "hvac", specifier = "==2.3.0" },
     { name = "loguru", specifier = "==0.7.3" },
     { name = "pre-commit", specifier = "==4.3.0" },

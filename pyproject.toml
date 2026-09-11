@@ -54,6 +54,14 @@ file-processing = [
     "requests==2.32.4",
     "PyYAML==6.0.2",
 ]
+content-external = [
+    "fastapi==0.115.12",
+    "uvicorn==0.34.2",
+    "pydantic-settings==2.10.1",
+    "boto3==1.34.0",
+    "requests==2.32.4",
+    "hvac==2.3.0",
+]
 
 [dependency-groups]
 dev = [

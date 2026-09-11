@@ -438,6 +438,20 @@ services:
       vault-agent-cleaner:
         condition: service_healthy
 
+  content-external:
+    container_name: content-external
+    build:
+      context: .
+      dockerfile: content-external/Dockerfile
+    ports:
+      - 8125:8125
+    volumes:
+      - content-external-work:/content-external-work
+    environment:
+      - CONTENT_WORK_DIR=/content-external-work
+    networks:
+      - bykstack
+
   rabbit-scrapper:
     image: rabbitmq:4-management
     container_name: rabbit-scrapper

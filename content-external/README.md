@@ -43,14 +43,19 @@ pattern as `cleaning/`.
 
 ```bash
 uv sync --frozen --extra content-external --group dev
-uv run uvicorn exporter.api.app:app --reload --port 8125
+CONTENT_WORK_DIR=/tmp/content-external-work \
+  uv run uvicorn exporter.api.app:app --reload --port 8125
 ```
+
+`CONTENT_WORK_DIR` has no default and the service refuses to start without
+it — see the note in the table below.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `CONTENT_WORK_DIR` | yes | Path to this service's own working volume — holds only the run lock and the deletion journal. Must never be under `/scrapped-data` (rule 1) |
+| `CONTENT_WORK_DIR` | **yes — no default** | Path to this service's own working volume — holds only the run lock and the deletion journal. Must never be under a `scrapped-data` tree (rule 1), asserted at startup against both the configured value and its resolved real path. There is deliberately no fallback: one would let a deployment that forgot this variable write to a path that is not the mounted volume and keep running. Compose and the chart both set `/var/lib/content-external` |
+| `VAULT_ADDR` / `VAULT_TOKEN_PATH` / `VAULT_SECRET_PATH` | no | Vault Agent sidecar, credentials fetched per task. `VAULT_SECRET_PATH` has no default — the Stage-H Azure value is `blob/connections/azure_blob/content` |
 | `CONTENT_SINK` | no (default `object_store`) | `object_store` \| `llm_module` — resolved once, in one factory, at run start |
 | `CONTENT_EXTERNAL_STORE_BACKEND` | no (default `s3`) | `s3` \| `azure_blob` — backend beneath the `object_store` sink |
 | `MANIFEST_STORE_BACKEND` / `MANIFEST_STORE_ENDPOINT_URL` / `MANIFEST_STORE_BUCKET` / `MANIFEST_STORE_PREFIX` | required for `llm_module`; optional for `object_store` (defaults to the sink's own store/prefix) | Where the per-agency manifest is committed. The `llm_module` sink has nowhere to hold it, so these must be set explicitly for that deployment — startup fails otherwise |

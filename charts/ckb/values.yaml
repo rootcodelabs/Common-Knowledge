@@ -618,8 +618,13 @@ contentExternal:
   service:
     type: ClusterIP
     port: 8125
-  workDir: /content-external-work
-  env: []  # wired in A10/A12
+  # Guarded by ckb.contentExternal.workDir in templates/_helpers.tpl: a value
+  # inside a scrapped-data tree aborts the render (rule 1).
+  workDir: /var/lib/content-external
+  # CONTENT_WORK_DIR is NOT listed here — the deployment templates it from
+  # workDir above so the env var and the volume mount cannot drift. This list
+  # is for the sink/manifest-store block that A12 adds.
+  env: []
   persistence:
     size: 1Gi
 

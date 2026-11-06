@@ -34,11 +34,15 @@ scripts need the Docker network that `docker-compose up` creates).
 
 - Docker, with **Docker Compose v2** (`docker compose ...`) 
 - Git, and network access to `github.com/buerokratt` to clone the sibling platform repos.
-- (Optional) S3-compatible storage (AWS S3, MinIO, …) for real file uploads. Local dev works
-  with placeholder S3 config (step 4) for everything except actual upload/download/zip.
+- S3 storage is included: the stack runs its own SeaweedFS, and the bucket is created on
+  first start (step 3). To use another S3-compatible store instead (AWS S3, MinIO, …), point
+  `S3_ENDPOINT_URL`, `S3_BUCKET_NAME` and the `AWS_*` keys at it.
+- Your machine (and its browser) must resolve `host.docker.internal`. Docker Desktop adds it
+  to the hosts file; on Linux add `127.0.0.1 host.docker.internal` to `/etc/hosts`. See step 3.
 
-> **Note:** PostgreSQL, OpenSearch, RabbitMQ and HashiCorp Vault all run as containers from
-> `docker-compose.yml` — you do **not** need to install them on the host.
+> **Note:** PostgreSQL, OpenSearch, RabbitMQ, HashiCorp Vault and the S3 object store
+> (SeaweedFS) all run as containers from `docker-compose.yml` — you do **not** need to install
+> them on the host.
 
 ### Step 1 — Clone this repository
 
@@ -101,14 +105,15 @@ S3 client at import time and **crashes on startup with `ValueError: Invalid endp
 `S3_ENDPOINT_URL` is empty or unset**. Create `.env` in the repo root:
 
 ```env
-# S3 / blob storage — REQUIRED (file-processing crashes without a valid, non-empty endpoint).
-# For local development without a real bucket, placeholders let the stack boot; actual
-# upload/download/zip operations will fail until you point these at a real S3 or local MinIO.
-AWS_ACCESS_KEY_ID=local-dev-placeholder
-AWS_SECRET_ACCESS_KEY=local-dev-placeholder
+# S3 object storage — REQUIRED. The stack runs its own SeaweedFS: it takes its login from
+# these two keys (pick any values) and seaweedfs-init creates the bucket on first start.
+AWS_ACCESS_KEY_ID=ckb-local
+AWS_SECRET_ACCESS_KEY=ckb-local-secret
 AWS_REGION=us-east-1
-S3_BUCKET_NAME=ckb-local
-S3_ENDPOINT_URL=http://localhost:9000
+S3_BUCKET_NAME=ckb-storage
+# host.docker.internal, not localhost or seaweedfs: presigned URLs are signed for this host,
+# and the browser, CKB's containers and external systems (via the CentOps zip link) all open them.
+S3_ENDPOINT_URL=http://host.docker.internal:8334
 
 # Optional file-processing tunables (compose supplies these defaults if omitted):
 # AUTO_CLEANUP_COMPLETED_TASKS=true
@@ -119,6 +124,15 @@ S3_ENDPOINT_URL=http://localhost:9000
 
 Database connection and inter-service URLs are already wired in `docker-compose.yml` and
 `constants.ini` — you do not set `DATABASE_URL` or the Ruuter URLs by hand for the local stack.
+
+Check that your machine resolves `host.docker.internal` to itself. On Windows, Docker Desktop
+writes it to `C:\Windows\System32\drivers\etc\hosts` with the machine's IP at that time, and the
+entry goes stale when your network changes; `127.0.0.1 host.docker.internal` avoids that. Once the
+stack is up (step 4), this should print `200`:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://host.docker.internal:8334/healthz
+```
 
 ### Step 4 — Start the stack
 

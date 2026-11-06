@@ -358,7 +358,11 @@ services:
       REACT_APP_RUUTER_API_URL: http://localhost:8086/ckb
       REACT_APP_RUUTER_PRIVATE_API_URL: http://localhost:8086/ckb
       REACT_APP_LOCAL: "true"
-      REACT_APP_CSP: "upgrade-insecure-requests; default-src 'self'; font-src 'self' data:; img-src * data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; connect-src 'self' http://localhost:8086 http://localhost:8085 http://localhost:4040 https://admin.dev.buerokratt.ee/chat/menu.json https://*.s3.amazonaws.com;"
+      # connect-src includes the S3 endpoint: the browser uploads and downloads
+      # straight to it with presigned URLs. No upgrade-insecure-requests here:
+      # it would turn those http:// requests into https://, which the local
+      # SeaweedFS does not serve.
+      REACT_APP_CSP: "default-src 'self'; font-src 'self' data:; img-src * data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; connect-src 'self' http://localhost:8086 http://localhost:8085 http://localhost:4040 http://host.docker.internal:8334 https://admin.dev.buerokratt.ee/chat/menu.json https://*.s3.amazonaws.com;"
       DEBUG_ENABLED: true
       CHOKIDAR_USEPOLLING: true
       PORT: 3001
